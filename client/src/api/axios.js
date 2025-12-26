@@ -1,9 +1,7 @@
 import axios from "axios";
 
 const baseURL =
-  import.meta?.env?.VITE_BASE_URL ||
-  "https://storybook-3lue.onrender.com/api/v1";
-
+  import.meta?.env?.VITE_BASE_URL || "http://localhost:8000/api/v1";
 const api = axios.create({
   baseURL,
   withCredentials: true, // required for cookies
@@ -34,11 +32,7 @@ api.interceptors.response.use(
       originalRequest.url.includes(route)
     );
 
-    if (
-      status === 401 &&
-      !originalRequest._retry &&
-      !isAuthRoute
-    ) {
+    if (status === 401 && !originalRequest._retry && !isAuthRoute) {
       originalRequest._retry = true;
 
       try {
