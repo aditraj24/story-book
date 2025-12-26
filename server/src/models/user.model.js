@@ -10,14 +10,14 @@ const userSchema = new Schema(
       trim: true,
     },
 
-    userName: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      unique: true,
-    },
+    // userName: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    //   lowercase: true,
+    //   trim: true,
+    //   unique: true,
+    // },
 
     email: {
       type: String,

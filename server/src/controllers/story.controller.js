@@ -9,34 +9,74 @@ import {
   getPublicIdFromUrl,
 } from "../utils/cloudinary.js";
 
-
 export const getMyStories = asyncHandler(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
   const stories = await Story.find({ owner: req.user._id })
-    .sort({ createdAt: -1 });
+    .populate("owner", "fullName avatar")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  const totalStories = await Story.countDocuments({
+    owner: req.user._id,
+  });
 
   return res.status(200).json(
-    new ApiResponse(200, stories, "My stories fetched successfully")
+    new ApiResponse(
+      200,
+      {
+        stories,
+        pagination: {
+          page,
+          limit,
+          totalStories,
+          totalPages: Math.ceil(totalStories / limit),
+        },
+      },
+      "My stories fetched successfully"
+    )
   );
 });
 
 export const getStories = asyncHandler(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
   const stories = await Story.find()
-    .populate("owner", "fullName avatar") // 👤 owner info
-    .sort({ createdAt: -1 });
+    .populate("owner", "fullName avatar")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean(); // faster read-only query
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, stories, "Stories fetched successfully"));
+  const totalStories = await Story.countDocuments();
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        stories,
+        pagination: {
+          page,
+          limit,
+          totalStories,
+          totalPages: Math.ceil(totalStories / limit),
+        },
+      },
+      "Stories fetched successfully"
+    )
+  );
 });
-
 
 export const getStoryById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const story = await Story.findById(id).populate(
-    "owner",
-    "fullName avatar"
-  );
+  const story = await Story.findById(id).populate("owner", "fullName avatar");
 
   if (!story) {
     throw new ApiError(404, "Story not found");
@@ -48,43 +88,65 @@ export const getStoryById = asyncHandler(async (req, res) => {
 });
 
 export const createStory = asyncHandler(async (req, res) => {
-  const { title, date, place, description } = req.body;
+  const { title, date, place, description, text } = req.body;
 
+  // convert string → Date
+  const parsedDate = new Date(date);
+
+  if (isNaN(parsedDate.getTime())) {
+    throw new ApiError(400, "Invalid date format. Use YYYY-MM-DD");
+  }
+
+  // Basic validation
   if (!title || !date || !place || !description) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const photos = [];
-  const videos = [];
+  const media = [];
 
-  // 📸 upload photos
-  if (req.files?.photos) {
-    for (const file of req.files.photos) {
-      const uploaded = await uploadOnCloudinary(file.path, "image");
+  /* ---------- Handle Uploaded Files ---------- */
+  if (req.files && req.files.length > 0) {
+    for (const file of req.files) {
+      let mediaType;
+
+      if (file.mimetype.startsWith("image/")) {
+        mediaType = "image";
+      } else if (file.mimetype.startsWith("video/")) {
+        mediaType = "video";
+      } else if (file.mimetype.startsWith("audio/")) {
+        mediaType = "audio";
+      } else {
+        continue;
+      }
+
+      const uploaded = await uploadOnCloudinary(file.path, mediaType);
+
       if (uploaded?.secure_url) {
-        photos.push(uploaded.secure_url);
+        media.push({
+          type: mediaType,
+          url: uploaded.secure_url,
+          publicId: uploaded.public_id,
+        });
       }
     }
   }
 
-  // 🎥 upload videos
-  if (req.files?.videos) {
-    for (const file of req.files.videos) {
-      const uploaded = await uploadOnCloudinary(file.path, "video");
-      if (uploaded?.secure_url) {
-        videos.push(uploaded.secure_url);
-      }
-    }
+  /* ---------- Handle Text Content ---------- */
+  if (text) {
+    media.push({
+      type: "text",
+      content: text,
+    });
   }
 
+  /* ---------- Create Story ---------- */
   const story = await Story.create({
     title,
-    date,
+    date: parsedDate,
     place,
     description,
-    photos,
-    videos,
-    owner: req.user._id, // 🔐 owner from JWT
+    media,
+    owner: req.user._id,
   });
 
   return res
@@ -101,36 +163,52 @@ export const updateStory = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Story not found");
   }
 
-  // 🔐 ownership check
+  // 🔐 Ownership check
   if (story.owner.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "You are not allowed to update this story");
   }
 
-  const { title, date, place, description } = req.body;
+  const { title, date, place, description, text } = req.body;
 
+  /* ---------- Update Basic Fields ---------- */
   if (title) story.title = title;
   if (date) story.date = date;
   if (place) story.place = place;
   if (description) story.description = description;
 
-  // 📸 new photos
-  if (req.files?.photos) {
-    for (const file of req.files.photos) {
-      const uploaded = await uploadOnCloudinary(file.path, "image");
+  /* ---------- Handle New Uploaded Media ---------- */
+  if (req.files && req.files.length > 0) {
+    for (const file of req.files) {
+      let mediaType;
+
+      if (file.mimetype.startsWith("image/")) {
+        mediaType = "image";
+      } else if (file.mimetype.startsWith("video/")) {
+        mediaType = "video";
+      } else if (file.mimetype.startsWith("audio/")) {
+        mediaType = "audio";
+      } else {
+        continue;
+      }
+
+      const uploaded = await uploadOnCloudinary(file.path, mediaType);
+
       if (uploaded?.secure_url) {
-        story.photos.push(uploaded.secure_url);
+        story.media.push({
+          type: mediaType,
+          url: uploaded.secure_url,
+          publicId: uploaded.public_id,
+        });
       }
     }
   }
 
-  // 🎥 new videos
-  if (req.files?.videos) {
-    for (const file of req.files.videos) {
-      const uploaded = await uploadOnCloudinary(file.path, "video");
-      if (uploaded?.secure_url) {
-        story.videos.push(uploaded.secure_url);
-      }
-    }
+  /* ---------- Handle New Text Block ---------- */
+  if (text) {
+    story.media.push({
+      type: "text",
+      content: text,
+    });
   }
 
   await story.save();
@@ -149,31 +227,25 @@ export const deleteStory = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Story not found");
   }
 
-  // 🔐 ownership check
+  // 🔐 Ownership check
   if (story.owner.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "You are not allowed to delete this story");
   }
 
-  // 🧹 delete photos from Cloudinary
-  for (const photoUrl of story.photos) {
-    const publicId = getPublicIdFromUrl(photoUrl);
-    if (publicId) {
-      await deleteFromCloudinary(publicId, "image");
+  /* ---------- Delete media from Cloudinary ---------- */
+  if (story.media && story.media.length > 0) {
+    for (const item of story.media) {
+      // Only file-based media have publicId
+      if (["image", "video", "audio"].includes(item.type) && item.publicId) {
+        await deleteFromCloudinary(item.publicId, item.type);
+      }
     }
   }
 
-  // 🧹 delete videos from Cloudinary
-  for (const videoUrl of story.videos) {
-    const publicId = getPublicIdFromUrl(videoUrl);
-    if (publicId) {
-      await deleteFromCloudinary(publicId, "video");
-    }
-  }
-
+  /* ---------- Delete story ---------- */
   await story.deleteOne();
 
   return res
     .status(200)
     .json(new ApiResponse(200, null, "Story deleted successfully"));
 });
-

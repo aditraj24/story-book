@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
-  getStories,        // all stories (public)
-  getMyStories,      // only logged-in user's stories
+  getStories, // public feed
+  getMyStories, // logged-in user's stories
   getStoryById,
   createStory,
   updateStory,
@@ -23,34 +23,21 @@ router.route("/").get(getStories);
 // 👤 Logged-in user's stories
 router.route("/me").get(verifyJWT, getMyStories);
 
-/* -------- Public Single Story -------- */
-
 // 📖 View single story (public)
 router.route("/:id").get(getStoryById);
-
 /* -------- Protected Routes -------- */
 
 // ✍️ Create story
 router.route("/").post(
   verifyJWT,
-  upload.fields([
-    { name: "photos", maxCount: 10 },
-    { name: "videos", maxCount: 5 },
-  ]),
+  upload.array("media", 15), // images + videos + audio
   createStory
 );
 
-// ✏️ Update / 🗑️ Delete (owner only)
-router
-  .route("/:id")
-  .patch(
-    verifyJWT,
-    upload.fields([
-      { name: "photos", maxCount: 10 },
-      { name: "videos", maxCount: 5 },
-    ]),
-    updateStory
-  )
-  .delete(verifyJWT, deleteStory);
+// ✏️ Update story (owner only)
+router.route("/:id").patch(verifyJWT, upload.array("media", 15), updateStory);
+
+// 🗑️ Delete story (owner only)
+router.route("/:id").delete(verifyJWT, deleteStory);
 
 export default router;

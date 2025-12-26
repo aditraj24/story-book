@@ -1,12 +1,12 @@
 import axios from "axios";
 
-// Vite exposes env vars on import.meta.env and requires VITE_ prefix for user vars
-const baseURL = import.meta?.env?.VITE_BASE_URL || "http://localhost:8000/api/v1";
-
+const baseURL =
+  import.meta?.env?.VITE_BASE_URL ||
+  "http://localhost:8000/api/v1";
 
 const api = axios.create({
-  baseURL: baseURL,
-  withCredentials: true, // 🔥 REQUIRED for cookies
+  baseURL,
+  withCredentials: true, // required for cookies
 });
 
 /* ---------- RESPONSE INTERCEPTOR ---------- */
@@ -15,21 +15,40 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Prevent infinite loop
+    // If no response, just reject (network error)
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
+    const { status } = error.response;
+
+    // ❌ Do NOT refresh for auth routes
+    const authRoutes = [
+      "/users/login",
+      "/users/register",
+      "/users/refresh-token",
+      "/users/logout",
+    ];
+
+    const isAuthRoute = authRoutes.some((route) =>
+      originalRequest.url.includes(route)
+    );
+
     if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
+      status === 401 &&
+      !originalRequest._retry &&
+      !isAuthRoute
     ) {
       originalRequest._retry = true;
 
       try {
-        // Attempt refresh
+        // Attempt token refresh
         await api.post("/users/refresh-token");
 
         // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → logout
+        // 🔥 Refresh failed → user is logged out
         return Promise.reject(refreshError);
       }
     }

@@ -26,51 +26,68 @@ const ProfilePage = () => {
   }, []);
 
   if (loading) {
-    return <div className="text-center mt-10">Loading profile...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <p className="text-gray-500">Loading profile...</p>
+      </div>
+    );
   }
 
   if (!currentUser) {
-    return <div className="text-center mt-10">No user found</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        No user found
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      {/* Cover Image */}
-      <Navbar/>
-      {currentUser.coverImage && (
-        <div className="w-full h-48 overflow-hidden rounded-xl mb-6">
-          <img
-            src={currentUser.coverImage}
-            alt="Cover"
-            className="w-full h-full object-cover"
-          />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      
+
+      <div className="max-w-4xl mx-auto px-6 py-14">
+        {/* Cover */}
+        <div className="relative h-56 rounded-3xl overflow-hidden shadow-lg mb-16 bg-gradient-to-r from-blue-500 to-purple-600">
+          {currentUser.coverImage && (
+            <img
+              src={currentUser.coverImage}
+              alt="Cover"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
         </div>
-      )}
 
-      {/* Profile Card */}
-      <div className="bg-white shadow rounded-xl p-6">
-        {/* Avatar + Info */}
-        <div className="flex items-center gap-6">
-          <img
-            src={currentUser.avatar || "/default-avatar.png"}
-            alt="Avatar"
-            className="w-24 h-24 rounded-full object-cover border"
-          />
-
-          <div>
-            <h2 className="text-2xl font-semibold">{currentUser.fullName}</h2>
-            <p className="text-gray-600">{currentUser.email}</p>
+        {/* Profile Card */}
+        <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 px-8 pb-8">
+          {/* Avatar */}
+          <div className="absolute -top-14 left-1/2 -translate-x-1/2">
+            <img
+              src={currentUser.avatar || "/default-avatar.png"}
+              alt="Avatar"
+              className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
+            />
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="mt-6">
-          <button
-            onClick={() => navigate("/edit-profile")}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Edit Profile
-          </button>
+          {/* Info */}
+          <div className="pt-20 text-center">
+            <h2 className="text-3xl font-bold text-gray-800">
+              {currentUser.fullName}
+            </h2>
+            <p className="text-gray-500 mt-1">{currentUser.email}</p>
+
+            {/* Actions */}
+            <div className="mt-6">
+              <button
+                onClick={() => navigate("/edit-profile")}
+                className="px-8 py-3 rounded-xl text-white font-medium
+                           bg-gradient-to-r from-blue-600 to-purple-600
+                           hover:from-blue-700 hover:to-purple-700
+                           transition-all shadow-lg hover:shadow-xl"
+              >
+                Edit Profile
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
+/* ---------------- Media Schema ---------------- */
 const mediaSchema = new Schema(
   {
     type: {
@@ -7,13 +8,21 @@ const mediaSchema = new Schema(
       enum: ["text", "image", "video", "audio"],
       required: true,
     },
-    content: String,
-    url: String,
-    publicId: String,
+    content: {
+      type: String, // for text content
+      trim: true,
+    },
+    url: {
+      type: String, // for image/video/audio
+    },
+    publicId: {
+      type: String, // cloudinary public_id
+    },
   },
   { _id: false }
 );
 
+/* ---------------- Story Schema ---------------- */
 const storySchema = new Schema(
   {
     title: {
@@ -36,9 +45,14 @@ const storySchema = new Schema(
       required: true,
       trim: true,
     },
-    media: [mediaSchema],
 
-    // OWNER (who created the story)
+    // All media (photos, videos, audio, text blocks)
+    media: {
+      type: [mediaSchema],
+      default: [],
+    },
+
+    // Story owner
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",

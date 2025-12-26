@@ -24,19 +24,13 @@ const RegisterPage = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     setAvatar(file);
-
-    if (file) {
-      setAvatarPreview(URL.createObjectURL(file));
-    }
+    if (file) setAvatarPreview(URL.createObjectURL(file));
   };
 
   const handleCoverChange = (e) => {
     const file = e.target.files[0];
     setCoverImage(file);
-
-    if (file) {
-      setCoverPreview(URL.createObjectURL(file));
-    }
+    if (file) setCoverPreview(URL.createObjectURL(file));
   };
 
   /* ---------- SUBMIT ---------- */
@@ -54,7 +48,6 @@ const RegisterPage = () => {
     formData.append("fullName", fullName);
     formData.append("email", email);
     formData.append("password", password);
-
     if (avatar) formData.append("avatar", avatar);
     if (coverImage) formData.append("coverImage", coverImage);
 
@@ -71,84 +64,146 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md p-6 border rounded-lg space-y-4"
+        className="w-full max-w-lg bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-white/50 space-y-6"
       >
-        <h2 className="text-2xl font-semibold text-center">Create Account</h2>
+        {/* Header */}
+        <div className="text-center">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Create Account ✨
+          </h2>
+          <p className="mt-2 text-gray-500 text-sm">
+            Start capturing your memories today
+          </p>
+        </div>
 
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        {/* Error */}
+        {error && (
+          <p className="text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">
+            {error}
+          </p>
+        )}
 
         {/* Full Name */}
-        <input
-          type="text"
-          placeholder="Full Name *"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
+        <div>
+          <label className="text-sm font-medium text-gray-700">
+            Full Name
+          </label>
+          <input
+            type="text"
+            placeholder="John Doe"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
         {/* Email */}
-        <input
-          type="email"
-          placeholder="Email *"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
+        <div>
+          <label className="text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
         {/* Password */}
-        <input
-          type="password"
-          placeholder="Password *"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border px-3 py-2 rounded"
-        />
+        <div>
+          <label className="text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
         {/* Avatar Upload */}
         <div>
-          <label className="block text-sm mb-1">Avatar (optional)</label>
+          <label className="text-sm font-medium text-gray-700 block mb-2">
+            Avatar (optional)
+          </label>
 
-          {avatarPreview && (
-            <img
-              src={avatarPreview}
-              alt="Avatar preview"
-              className="w-20 h-20 rounded-full object-cover mb-2"
-            />
-          )}
+          <div className="flex items-center gap-4">
+            {avatarPreview ? (
+              <img
+                src={avatarPreview}
+                alt="Avatar preview"
+                className="w-20 h-20 rounded-full object-cover border shadow"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                Avatar
+              </div>
+            )}
 
-          <input type="file" accept="image/*" onChange={handleAvatarChange} />
+            <label className="cursor-pointer px-4 py-2 border rounded-xl text-sm hover:bg-gray-50 transition">
+              Upload Avatar
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
 
         {/* Cover Image Upload */}
         <div>
-          <label className="block text-sm mb-1">Cover Image (optional)</label>
+          <label className="text-sm font-medium text-gray-700 block mb-2">
+            Cover Image (optional)
+          </label>
 
           {coverPreview && (
             <img
               src={coverPreview}
               alt="Cover preview"
-              className="w-full h-32 object-cover rounded mb-2"
+              className="w-full h-32 object-cover rounded-xl mb-3 shadow"
             />
           )}
 
-          <input type="file" accept="image/*" onChange={handleCoverChange} />
+          <label className="cursor-pointer flex items-center justify-center w-full border-2 border-dashed rounded-xl p-5 text-sm text-gray-500 hover:border-blue-500 transition">
+            Click to upload cover image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverChange}
+              className="hidden"
+            />
+          </label>
         </div>
 
         {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          className="w-full py-3 rounded-xl text-white font-medium
+                     bg-gradient-to-r from-blue-600 to-purple-600
+                     hover:from-blue-700 hover:to-purple-700
+                     transition-all shadow-lg hover:shadow-xl
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Creating account..." : "Register"}
         </button>
 
-        <p className="text-sm text-center">
+        {/* Footer */}
+        <p className="text-sm text-center text-gray-500">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600">
+          <Link
+            to="/login"
+            className="text-blue-600 hover:underline font-medium"
+          >
             Login
           </Link>
         </p>

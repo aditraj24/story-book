@@ -4,7 +4,6 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 
 const MAX_PHOTOS = 10;
-const MAX_VIDEOS = 5;
 
 const CreateStory = () => {
   const { API } = useAuth();
@@ -14,12 +13,10 @@ const CreateStory = () => {
   const [date, setDate] = useState("");
   const [place, setPlace] = useState("");
   const [description, setDescription] = useState("");
+  const [text, setText] = useState("");
 
   const [photos, setPhotos] = useState([]);
-  const [videos, setVideos] = useState([]);
-
   const [photoPreviews, setPhotoPreviews] = useState([]);
-  const [videoPreviews, setVideoPreviews] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -28,27 +25,18 @@ const CreateStory = () => {
   useEffect(() => {
     return () => {
       photoPreviews.forEach(URL.revokeObjectURL);
-      videoPreviews.forEach(URL.revokeObjectURL);
     };
-  }, [photoPreviews, videoPreviews]);
+  }, [photoPreviews]);
 
-  /* ---------- File Handlers ---------- */
-
+  /* ---------- Photo Handlers ---------- */
   const handlePhotosChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files).slice(
+      0,
+      MAX_PHOTOS - photos.length
+    );
 
     setPhotos((prev) => [...prev, ...files]);
     setPhotoPreviews((prev) => [
-      ...prev,
-      ...files.map((file) => URL.createObjectURL(file)),
-    ]);
-  };
-
-  const handleVideosChange = (e) => {
-    const files = Array.from(e.target.files);
-
-    setVideos((prev) => [...prev, ...files]);
-    setVideoPreviews((prev) => [
       ...prev,
       ...files.map((file) => URL.createObjectURL(file)),
     ]);
@@ -59,13 +47,7 @@ const CreateStory = () => {
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const removeVideo = (index) => {
-    setVideos((prev) => prev.filter((_, i) => i !== index));
-    setVideoPreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
   /* ---------- Submit ---------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -80,17 +62,13 @@ const CreateStory = () => {
     formData.append("date", date);
     formData.append("place", place);
     formData.append("description", description);
-
-    photos.forEach((photo) => formData.append("photos", photo));
-    videos.forEach((video) => formData.append("videos", video));
+    if (text) formData.append("text", text);
+    photos.forEach((photo) => formData.append("media", photo));
 
     setLoading(true);
 
     try {
-      await API.post("/stories", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      await API.post("/stories", formData);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create story");
@@ -100,111 +78,155 @@ const CreateStory = () => {
   };
 
   return (
-    <div>
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <div className="max-w-3xl mx-auto px-6 py-14">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Create New Story ✨
+          </h1>
+          <p className="mt-3 text-gray-500">
+            Share a moment that matters. Your story will live forever.
+          </p>
+        </div>
 
-      <div className="max-w-3xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-6">Create New Story</h1>
-
+        {/* Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-xl shadow space-y-5"
+          className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-white/50 space-y-6"
         >
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+          {error && (
+            <p className="text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">
+              {error}
+            </p>
+          )}
 
-          <input
-            type="text"
-            placeholder="Story Title *"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+          {/* Title */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Story Title *
+            </label>
+            <input
+              type="text"
+              placeholder="A moment to remember"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
 
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+          {/* Date & Place */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Date *
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
 
-          <input
-            type="text"
-            placeholder="Place *"
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Place *
+              </label>
+              <input
+                type="text"
+                placeholder="Where did it happen?"
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
 
-          <textarea
-            rows="5"
-            placeholder="Write your story..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+          {/* Description */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Description *
+            </label>
+            <textarea
+              rows="4"
+              placeholder="Describe the story..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+            />
+          </div>
+
+          {/* Extra Text */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Extra Memory (optional)
+            </label>
+            <textarea
+              rows="2"
+              placeholder="Any extra feelings or thoughts?"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+            />
+          </div>
 
           {/* Photos */}
           <div>
-            <label className="block text-sm mb-1">
+            <label className="text-sm font-medium text-gray-700 block mb-2">
               Photos (up to {MAX_PHOTOS})
             </label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handlePhotosChange}
-            />
 
-            <div className="grid grid-cols-3 gap-3 mt-3">
-              {photoPreviews.map((src, idx) => (
-                <div key={idx} className="relative">
-                  <img src={src} className="h-24 w-full object-cover rounded" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(idx)}
-                    className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+            <div className="flex items-center justify-center w-full">
+              <label className="w-full cursor-pointer border-2 border-dashed rounded-xl p-6 text-center hover:border-blue-500 transition">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotosChange}
+                  className="hidden"
+                />
+                <p className="text-gray-500">
+                  Click to upload or drag & drop photos
+                </p>
+              </label>
             </div>
+
+            {photoPreviews.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+                {photoPreviews.map((src, idx) => (
+                  <div
+                    key={idx}
+                    className="relative group rounded-xl overflow-hidden shadow"
+                  >
+                    <img
+                      src={src}
+                      className="h-24 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(idx)}
+                      className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Videos */}
-          <div>
-            <label className="block text-sm mb-1">
-              Videos (up to {MAX_VIDEOS})
-            </label>
-            <input
-              type="file"
-              multiple
-              accept="video/*"
-              onChange={handleVideosChange}
-            />
-
-            <div className="grid gap-3 mt-3">
-              {videoPreviews.map((src, idx) => (
-                <div key={idx} className="relative">
-                  <video src={src} controls className="rounded" />
-                  <button
-                    type="button"
-                    onClick={() => removeVideo(idx)}
-                    className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-3 rounded-xl text-white font-medium
+                       bg-gradient-to-r from-blue-600 to-purple-600
+                       hover:from-blue-700 hover:to-purple-700
+                       transition-all shadow-lg hover:shadow-xl
+                       disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Creating..." : "Create Story"}
+            {loading ? "Creating Story..." : "Create Story"}
           </button>
         </form>
       </div>

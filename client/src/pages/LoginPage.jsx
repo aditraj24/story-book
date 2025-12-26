@@ -26,51 +26,80 @@ const LoginPage = () => {
       await login({ email, password });
       navigate("/");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Login failed"
-      );
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4">
+      {/* Card */}
       <form
         onSubmit={handleSubmit}
-        className="w-80 p-6 border rounded space-y-4"
+        className="w-full max-w-md bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-white/50 space-y-6"
       >
-        <h2 className="text-xl font-semibold">Login</h2>
+        {/* Header */}
+        <div className="text-center">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Welcome Back 👋
+          </h2>
+          <p className="mt-2 text-gray-500 text-sm">
+            Login to continue your stories
+          </p>
+        </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {/* Error */}
+        {error && (
+          <p className="text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">
+            {error}
+          </p>
+        )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border px-3 py-2"
-        />
+        {/* Email */}
+        <div>
+          <label className="text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border px-3 py-2"
-        />
+        {/* Password */}
+        <div>
+          <label className="text-sm font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2"
+          className="w-full py-3 rounded-xl text-white font-medium
+                     bg-gradient-to-r from-blue-600 to-purple-600
+                     hover:from-blue-700 hover:to-purple-700
+                     transition-all shadow-lg hover:shadow-xl
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p className="text-sm text-center">
+        {/* Footer */}
+        <p className="text-sm text-center text-gray-500">
           Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-600">
+          <Link
+            to="/register"
+            className="text-blue-600 hover:underline font-medium"
+          >
             Register
           </Link>
         </p>

@@ -10,14 +10,14 @@ const ViewStory = () => {
 
   const [story, setStory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
       try {
         const res = await API.get(`/stories/${id}`);
         setStory(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch story");
+      } catch {
         navigate("/");
       } finally {
         setLoading(false);
@@ -25,92 +25,137 @@ const ViewStory = () => {
     };
 
     fetchStory();
-  }, [id]);
+  }, [id, navigate]);
 
   if (loading) {
     return (
-      <div>
-        <Navbar />
-        <p className="text-center mt-10">Loading story...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <p className="text-gray-500">Loading story...</p>
       </div>
     );
   }
 
   if (!story) {
     return (
-      <div>
-        <Navbar />
-        <p className="text-center mt-10 text-gray-500">Story not found</p>
+      <div className="min-h-screen flex items-center justify-center">
+        Story not found
       </div>
     );
   }
 
-  /* ---------- OWNERSHIP CHECK ---------- */
   const isOwner =
     user && (story.owner === user._id || story.owner?._id === user._id);
 
-  return (
-    <div>
-      <Navbar />
+  const author = story.owner;
 
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-semibold">{story.title}</h1>
-            <p className="text-gray-600">{story.place}</p>
-            <p className="text-sm text-gray-500">
-              {new Date(story.date).toDateString()}
-            </p>
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this story? This action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setDeleting(true);
+      await API.delete(`/stories/${story._id}`);
+      navigate("/my-story");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete story");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    
+
+      <div className="max-w-4xl mx-auto px-6 py-14">
+        {/* ---------- AUTHOR CARD ---------- */}
+        {author && (
+          <div className="flex items-center gap-4 mb-10 p-5 bg-white/90 backdrop-blur-xl rounded-2xl shadow border border-white/50">
+            <img
+              src={author.avatar || "/avatar-placeholder.png"}
+              alt={author.fullName}
+              className="w-14 h-14 rounded-full object-cover border"
+            />
+            <div>
+              <p className="font-semibold text-gray-800">{author.fullName}</p>
+              <p className="text-sm text-gray-500">{author.email}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ---------- STORY CARD ---------- */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 mb-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-1">
+                {story.title}
+              </h1>
+              <p className="text-gray-600">{story.place}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {new Date(story.date).toDateString()}
+              </p>
+            </div>
+
+            {/* Owner Actions */}
+            {isOwner && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate(`/stories/${story._id}/edit`)}
+                  className="px-5 py-2 rounded-xl text-white font-medium
+                             bg-gradient-to-r from-blue-600 to-purple-600
+                             hover:from-blue-700 hover:to-purple-700
+                             transition-all shadow"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="px-5 py-2 rounded-xl text-white font-medium
+                             bg-gradient-to-r from-red-600 to-rose-600
+                             hover:from-red-700 hover:to-rose-700
+                             transition-all shadow
+                             disabled:opacity-50"
+                >
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Edit button (ONLY for owner) */}
-          {isOwner && (
-            <button
-              onClick={() => navigate(`/stories/${story._id}/edit`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Edit Story
-            </button>
+          {/* Description */}
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line mb-10">
+            {story.description}
+          </p>
+
+          {/* Media */}
+          {story.media?.length > 0 && (
+            <div className="space-y-8">
+              {story.media.map((item, index) => (
+                <div key={index}>
+                  {item.type === "image" && (
+                    <img
+                      src={item.url}
+                      alt="Story media"
+                      className="w-full rounded-2xl shadow object-cover"
+                    />
+                  )}
+
+                  {item.type === "text" && (
+                    <p className="italic text-gray-600 mt-3 pl-4 border-l-4 border-blue-500">
+                      {item.content}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
-
-        {/* Description */}
-        <p className="mb-6 whitespace-pre-line">{story.description}</p>
-
-        {/* Photos */}
-        {story.photos?.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Photos</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {story.photos.map((url, index) => (
-                <img
-                  key={index}
-                  src={url}
-                  alt="Story"
-                  className="w-full rounded-lg object-cover"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Videos */}
-        {story.videos?.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Videos</h3>
-            <div className="grid grid-cols-1 gap-4">
-              {story.videos.map((url, index) => (
-                <video
-                  key={index}
-                  src={url}
-                  controls
-                  className="w-full rounded-lg"
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -18,12 +18,10 @@ const EditStory = () => {
   const [date, setDate] = useState("");
   const [place, setPlace] = useState("");
   const [description, setDescription] = useState("");
+  const [text, setText] = useState("");
 
-  const [newPhotos, setNewPhotos] = useState([]);
-  const [newVideos, setNewVideos] = useState([]);
-
-  const [photoPreviews, setPhotoPreviews] = useState([]);
-  const [videoPreviews, setVideoPreviews] = useState([]);
+  const [newMedia, setNewMedia] = useState([]);
+  const [mediaPreviews, setMediaPreviews] = useState([]);
 
   /* ---------- FETCH STORY ---------- */
   useEffect(() => {
@@ -32,19 +30,17 @@ const EditStory = () => {
         const res = await API.get(`/stories/${id}`);
         const data = res.data.data;
 
-        setStory(data);
-
-        // Ownership check (UI only)
         if (data.owner !== user._id && data.owner?._id !== user._id) {
           navigate(`/stories/${id}`);
           return;
         }
 
+        setStory(data);
         setTitle(data.title);
         setDate(data.date.split("T")[0]);
         setPlace(data.place);
         setDescription(data.description);
-      } catch (err) {
+      } catch {
         navigate("/");
       } finally {
         setLoading(false);
@@ -52,40 +48,24 @@ const EditStory = () => {
     };
 
     fetchStory();
-  }, [id]);
+  }, [id, user._id, navigate]);
 
-  /* ---------- FILE HANDLERS ---------- */
-
-  const handlePhotoChange = (e) => {
+  /* ---------- MEDIA HANDLERS ---------- */
+  const handleMediaChange = (e) => {
     const files = Array.from(e.target.files);
-    setNewPhotos((prev) => [...prev, ...files]);
-    setPhotoPreviews((prev) => [
+    setNewMedia((prev) => [...prev, ...files]);
+    setMediaPreviews((prev) => [
       ...prev,
-      ...files.map((f) => URL.createObjectURL(f)),
+      ...files.map((f) => ({ url: URL.createObjectURL(f) })),
     ]);
   };
 
-  const handleVideoChange = (e) => {
-    const files = Array.from(e.target.files);
-    setNewVideos((prev) => [...prev, ...files]);
-    setVideoPreviews((prev) => [
-      ...prev,
-      ...files.map((f) => URL.createObjectURL(f)),
-    ]);
-  };
-
-  const removeNewPhoto = (index) => {
-    setNewPhotos((prev) => prev.filter((_, i) => i !== index));
-    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewVideo = (index) => {
-    setNewVideos((prev) => prev.filter((_, i) => i !== index));
-    setVideoPreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeNewMedia = (index) => {
+    setNewMedia((prev) => prev.filter((_, i) => i !== index));
+    setMediaPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   /* ---------- SUBMIT ---------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -100,17 +80,12 @@ const EditStory = () => {
     formData.append("date", date);
     formData.append("place", place);
     formData.append("description", description);
-
-    newPhotos.forEach((p) => formData.append("photos", p));
-    newVideos.forEach((v) => formData.append("videos", v));
+    if (text) formData.append("text", text);
+    newMedia.forEach((file) => formData.append("media", file));
 
     setSaving(true);
-
     try {
-      await API.patch(`/stories/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      await API.patch(`/stories/${id}`, formData);
       navigate(`/stories/${id}`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update story");
@@ -121,101 +96,161 @@ const EditStory = () => {
 
   if (loading) {
     return (
-      <div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
         <Navbar />
-        <p className="text-center mt-10">Loading story...</p>
+        <p className="text-center mt-20 text-gray-500">Loading story...</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      
 
-      <div className="max-w-3xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-6">Edit Story</h1>
+      <div className="max-w-3xl mx-auto px-6 py-14">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Edit Story ✨
+          </h1>
+          <p className="mt-3 text-gray-500">
+            Refine your memory and make it even better
+          </p>
+        </div>
 
+        {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-xl shadow space-y-5"
+          className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-xl border border-white/50 space-y-6"
         >
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+          {error && (
+            <p className="text-red-600 text-sm text-center bg-red-50 py-2 rounded-lg">
+              {error}
+            </p>
+          )}
 
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            placeholder="Title"
-          />
+          {/* Title */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
 
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+          {/* Date & Place */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
 
-          <input
-            type="text"
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            placeholder="Place"
-          />
+            <div>
+              <label className="text-sm font-medium text-gray-700">Place</label>
+              <input
+                type="text"
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
 
-          <textarea
-            rows="5"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+          {/* Description */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              rows="4"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+            />
+          </div>
+
+          {/* Extra Text */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Add New Text (optional)
+            </label>
+            <textarea
+              rows="2"
+              placeholder="Add an extra memory..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+            />
+          </div>
 
           {/* Existing Media */}
-          {story.photos?.length > 0 && (
+          {story.media?.length > 0 && (
             <div>
-              <p className="font-medium mb-2">Existing Photos</p>
-              <div className="grid grid-cols-3 gap-3">
-                {story.photos.map((url, i) => (
-                  <img
+              <p className="font-semibold text-gray-800 mb-3">Existing Media</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                {story.media.map((item, i) => (
+                  <div
                     key={i}
-                    src={url}
-                    className="h-24 w-full object-cover rounded"
-                  />
+                    className="rounded-xl overflow-hidden shadow bg-white"
+                  >
+                    {item.type === "image" && (
+                      <img
+                        src={item.url}
+                        className="h-32 w-full object-cover"
+                      />
+                    )}
+                    {item.type === "text" && (
+                      <p className="p-4 text-gray-700 italic">{item.content}</p>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          {story.videos?.length > 0 && (
-            <div>
-              <p className="font-medium mb-2">Existing Videos</p>
-              {story.videos.map((url, i) => (
-                <video key={i} src={url} controls className="rounded mb-2" />
-              ))}
-            </div>
-          )}
-
-          {/* Add New Media */}
+          {/* Add Images */}
           <div>
-            <label className="block mb-1">Add Photos</label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handlePhotoChange}
-            />
+            <label className="text-sm font-medium text-gray-700 block mb-2">
+              Add Images
+            </label>
+
+            <label className="flex items-center justify-center w-full border-2 border-dashed rounded-xl p-6 cursor-pointer hover:border-blue-500 transition">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleMediaChange}
+                className="hidden"
+              />
+              <span className="text-gray-500">
+                Click to upload or drag & drop images
+              </span>
+            </label>
           </div>
 
-          {photoPreviews.length > 0 && (
+          {mediaPreviews.length > 0 && (
             <div className="grid grid-cols-3 gap-3">
-              {photoPreviews.map((src, i) => (
-                <div key={i} className="relative">
-                  <img src={src} className="h-24 w-full object-cover rounded" />
+              {mediaPreviews.map((item, i) => (
+                <div
+                  key={i}
+                  className="relative group rounded-xl overflow-hidden shadow"
+                >
+                  <img
+                    src={item.url}
+                    className="h-24 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <button
                     type="button"
-                    onClick={() => removeNewPhoto(i)}
-                    className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded"
+                    onClick={() => removeNewMedia(i)}
+                    className="absolute top-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition"
                   >
                     ✕
                   </button>
@@ -224,35 +259,17 @@ const EditStory = () => {
             </div>
           )}
 
-          <div>
-            <label className="block mb-1">Add Videos</label>
-            <input
-              type="file"
-              multiple
-              accept="video/*"
-              onChange={handleVideoChange}
-            />
-          </div>
-
-          {videoPreviews.map((src, i) => (
-            <div key={i} className="relative">
-              <video src={src} controls className="rounded" />
-              <button
-                type="button"
-                onClick={() => removeNewVideo(i)}
-                className="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-
+          {/* Submit */}
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-3 rounded-xl text-white font-medium
+                       bg-gradient-to-r from-blue-600 to-purple-600
+                       hover:from-blue-700 hover:to-purple-700
+                       transition-all shadow-lg hover:shadow-xl
+                       disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving Changes..." : "Save Changes"}
           </button>
         </form>
       </div>

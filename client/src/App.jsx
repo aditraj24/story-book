@@ -1,8 +1,8 @@
 import { Route, Routes } from "react-router-dom";
+import { useAuth } from "./context/AuthContext.jsx";
+
 import Home from "./pages/HomePage.jsx";
 import Login from "./pages/LoginPage.jsx";
-import GuestRoute from "./components/GuestRoute.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Register from "./pages/RegisterPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import MyStoriesPage from "./pages/MyStoriesPage.jsx";
@@ -10,9 +10,19 @@ import EditProfilePage from "./pages/EditProfilePage.jsx";
 import ViewStory from "./pages/ViewStory.jsx";
 import CreateStory from "./pages/CreateStory.jsx";
 import EditStory from "./pages/EditStory.jsx";
+
+import GuestRoute from "./components/GuestRoute.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Navbar from "./components/Navbar.jsx";
+
 const App = () => {
+  const { user } = useAuth();
+
   return (
     <>
+      {/* Show navbar only when logged in */}
+      {user && <Navbar />}
+
       <Routes>
         <Route
           path="/login"
@@ -22,6 +32,7 @@ const App = () => {
             </GuestRoute>
           }
         />
+
         <Route
           path="/register"
           element={
@@ -30,6 +41,7 @@ const App = () => {
             </GuestRoute>
           }
         />
+
         <Route
           path="/"
           element={
@@ -38,6 +50,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/profile"
           element={
@@ -46,14 +59,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/my-story"
           element={
@@ -62,6 +68,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/edit-profile"
           element={
@@ -70,6 +77,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/create-stories"
           element={
@@ -78,6 +86,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/stories/:id"
           element={
@@ -86,11 +95,12 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/stories/:id/edit"
           element={
             <ProtectedRoute>
-              <EditStory/>
+              <EditStory />
             </ProtectedRoute>
           }
         />
