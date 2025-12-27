@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://story-book-2.vercel.app/",
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
     credentials: true,
   })
 );
