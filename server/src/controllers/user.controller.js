@@ -106,8 +106,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
   };
 
   return res
@@ -134,8 +134,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
   };
 
   return res
@@ -250,8 +250,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
   };
 
   return res
