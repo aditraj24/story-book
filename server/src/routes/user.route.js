@@ -5,7 +5,8 @@ import {
   registerUser,
   refreshAccessToken,
   getCurrentUser,
-  editProfile
+  editProfile,
+  getUserById
 } from "../controllers/user.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js";
@@ -29,7 +30,7 @@ router.route("/refresh-token").post(refreshAccessToken);
 /* ---------- Protected Routes ---------- */
 
 router.route("/logout").post(verifyJWT, logoutUser);
-
+router.route("/c/:userId").get(getUserById);
 router.route("/me")
   .get(verifyJWT, getCurrentUser)
   .patch(

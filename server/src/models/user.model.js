@@ -10,6 +10,10 @@ const userSchema = new Schema(
       required: true,
       trim: true,
     },
+    // bio:{
+    //   type: String
+      
+    // },
 
     // userName: {
     //   type: String,

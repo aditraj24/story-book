@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -269,6 +269,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         _id: req.user._id,
         fullName: req.user.fullName,
         email: req.user.email,
+        // bio: req.user.bio,
         avatar: req.user.avatar,
         coverImage: req.user.coverImage,
         createdAt: req.user.createdAt,
@@ -278,6 +279,25 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   );
 });
 
+const getUserById = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    // Validate if the ID is a valid MongoDB ObjectId
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid User ID");
+    }
+
+    const user = await User.findById(userId).select("-password -refreshToken");
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "User fetched successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -285,4 +305,5 @@ export {
   refreshAccessToken,
   editProfile,
   getCurrentUser,
+  getUserById
 };

@@ -11,19 +11,49 @@ import {
 
 export const getMyStories = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
-  const stories = await Story.find({ owner: req.user._id })
-    .populate("owner", "fullName avatar")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+  const limit = Number(req.query.limit) || 9;
+  const { sortBy = "newest" } = req.query;
 
   const totalStories = await Story.countDocuments({
     owner: req.user._id,
   });
+
+  let stories = [];
+
+  if (sortBy === "random") {
+    // ✅ TRUE RANDOM (no pagination)
+    stories = await Story.aggregate([
+      { $match: { owner: req.user._id } },
+      { $sample: { size: limit } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      { $unwind: "$owner" },
+      {
+        $project: {
+          "owner.password": 0,
+          "owner.refreshToken": 0,
+        },
+      },
+    ]);
+  } else {
+    const skip = (page - 1) * limit;
+
+    const sortCriteria =
+      sortBy === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    stories = await Story.find({ owner: req.user._id })
+      .populate("owner", "fullName avatar")
+      .sort(sortCriteria)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
 
   return res.status(200).json(
     new ApiResponse(
@@ -35,6 +65,7 @@ export const getMyStories = asyncHandler(async (req, res) => {
           limit,
           totalStories,
           totalPages: Math.ceil(totalStories / limit),
+          random: sortBy === "random",
         },
       },
       "My stories fetched successfully"
@@ -44,17 +75,46 @@ export const getMyStories = asyncHandler(async (req, res) => {
 
 export const getStories = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  const limit = Number(req.query.limit) || 12;
+  const { sortBy = "newest" } = req.query;
 
-  const stories = await Story.find()
-    .populate("owner", "fullName avatar")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean(); // faster read-only query
+  let stories = [];
+  let totalStories = await Story.countDocuments();
 
-  const totalStories = await Story.countDocuments();
+  if (sortBy === "random") {
+    // ✅ TRUE RANDOM
+    stories = await Story.aggregate([
+      { $sample: { size: limit } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      { $unwind: "$owner" },
+      {
+        $project: {
+          "owner.password": 0,
+          "owner.refreshToken": 0,
+        },
+      },
+    ]);
+  } else {
+    // Normal pagination sorting
+    const skip = (page - 1) * limit;
+
+    let sortCriteria =
+      sortBy === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    stories = await Story.find()
+      .populate("owner", "fullName avatar")
+      .sort(sortCriteria)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+  }
 
   return res.status(200).json(
     new ApiResponse(

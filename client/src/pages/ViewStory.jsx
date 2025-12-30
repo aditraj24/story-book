@@ -68,21 +68,30 @@ const ViewStory = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-    
-
       <div className="max-w-4xl mx-auto px-6 py-14">
         {/* ---------- AUTHOR CARD ---------- */}
+        {/* ---------- AUTHOR CARD ---------- */}
         {author && (
-          <div className="flex items-center gap-4 mb-10 p-5 bg-white/90 backdrop-blur-xl rounded-2xl shadow border border-white/50">
-            <img
-              src={author.avatar || "/avatar-placeholder.png"}
-              alt={author.fullName}
-              className="w-14 h-14 rounded-full object-cover border"
-            />
-            <div>
-              <p className="font-semibold text-gray-800">{author.fullName}</p>
-              <p className="text-sm text-gray-500">{author.email}</p>
+          <div className="flex items-center justify-between mb-10 p-5 bg-white/90 backdrop-blur-xl rounded-2xl shadow border border-white/50">
+            <div className="flex items-center gap-4">
+              <img
+                src={author.avatar || "/avatar-placeholder.png"}
+                alt={author.fullName}
+                className="w-14 h-14 rounded-full object-cover border"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">{author.fullName}</p>
+                <p className="text-sm text-gray-500">{author.email}</p>
+              </div>
             </div>
+
+            {/* New View Profile Button */}
+            <button
+              onClick={() => navigate(`/user/${author._id || author}`)}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-4 py-2 rounded-lg transition-colors"
+            >
+              View Profile
+            </button>
           </div>
         )}
 
@@ -157,6 +166,18 @@ const ViewStory = () => {
           )}
         </div>
       </div>
+      <div className="pb-16 flex justify-center">
+        <button
+          onClick={() => navigate(-1)}
+          className="group flex items-center gap-2 text-gray-500 font-semibold hover:text-gray-900 transition-colors"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform">
+            ←
+          </span>
+          Return
+        </button>
+      </div>
+        <div className="h-10"></div>
     </div>
   );
 };

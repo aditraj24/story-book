@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import StoryCard from "../components/StoryCard";
 
@@ -12,20 +11,46 @@ const HomePage = () => {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const res = await API.get("/stories");
-        setStories(res.data?.data?.stories || []);
-      } catch (err) {
-        console.error("Failed to fetch stories");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // const [stories, setStories] = useState([]);
+  // const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [sortBy, setSortBy] = useState("newest"); // Default sort
 
-    fetchStories();
-  }, []);
+  const LIMIT = 12;
+
+  const fetchStories = async (pageNumber = 1, currentSort = sortBy) => {
+    try {
+      if (pageNumber === 1) setLoading(true);
+      // Passing page, limit, and sortBy to your backend API
+      const res = await API.get(
+        `/stories?page=${pageNumber}&limit=${LIMIT}&sortBy=${currentSort}`
+      );
+
+      const { stories: newStories, pagination } = res.data?.data || {};
+
+      setStories((prev) =>
+        pageNumber === 1 ? newStories : [...prev, ...newStories]
+      );
+      setHasMore(pageNumber < pagination?.totalPages);
+    } catch (err) {
+      console.error("Failed to fetch stories", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Re-fetch from scratch when sort changes
+  useEffect(() => {
+    setPage(1);
+    fetchStories(1, sortBy);
+  }, [sortBy]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchStories(nextPage, sortBy);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -257,8 +282,65 @@ const HomePage = () => {
                   Explore Stories
                 </span>
               </motion.button>
+              
             </motion.div>
           </motion.div>
+          {/* Add this inside your Hero Section, below the description or buttons */}
+<motion.div
+  className="mt-14 flex justify-center"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.4, duration: 0.5 }}
+>
+  <motion.div
+    whileHover={{ scale: 1.03 }}
+    whileTap={{ scale: 0.97 }}
+    className="flex items-center gap-4 px-5 py-3 rounded-2xl
+               bg-white/70 backdrop-blur-xl
+               border border-white/40
+               shadow-lg shadow-black/5"
+  >
+    {/* Label */}
+    <span className="text-xs font-semibold text-gray-400 uppercase tracking-[0.2em]">
+      Sort by
+    </span>
+
+    {/* Divider */}
+    <span className="h-5 w-px bg-gray-300/50" />
+
+    {/* Select */}
+    <div className="relative">
+      <select
+        value={sortBy}
+        onChange={(e) => setSortBy(e.target.value)}
+        className="appearance-none bg-transparent pr-8
+                   text-sm font-semibold text-gray-800
+                   cursor-pointer focus:outline-none"
+      >
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="random">Random discovery</option>
+      </select>
+
+      {/* Custom arrow */}
+      <svg
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4
+                   text-gray-500 pointer-events-none"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 9l-7 7-7-7"
+        />
+      </svg>
+    </div>
+  </motion.div>
+</motion.div>
+
         </div>
 
         {/* Floating particles */}
@@ -448,6 +530,56 @@ const HomePage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        {/* Inside <main>, after the {stories.map(...)} block */}
+{hasMore && (
+  <motion.div 
+    className="mt-20 mb-10 flex flex-col items-center gap-4"
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+  >
+    {/* Optional: Progress Indicator */}
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+      Showing {stories.length} stories
+    </p>
+
+    <motion.button
+      onClick={handleLoadMore}
+      disabled={loading}
+      className="relative group px-12 py-4 rounded-full bg-white text-slate-900 font-bold 
+                 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] overflow-hidden
+                 border border-slate-200 transition-all hover:border-transparent"
+      whileHover={!loading ? { scale: 1.05 } : {}}
+      whileTap={!loading ? { scale: 0.98 } : {}}
+    >
+      {/* Animated Gradient Background on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+      
+      <div className="relative z-10 flex items-center gap-3">
+        {loading ? (
+          <>
+            {/* Spinner Icon */}
+            <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-slate-500">Fetching more...</span>
+          </>
+        ) : (
+          <>
+            <span>Explore More</span>
+            <motion.span 
+              animate={{ y: [0, 4, 0] }} 
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              ↓
+            </motion.span>
+          </>
+        )}
+      </div>
+    </motion.button>
+  </motion.div>
+)}
       </main>
       {/* ================= FOOTER ================= */}{" "}
       <motion.footer

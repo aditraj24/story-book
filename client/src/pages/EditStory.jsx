@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
+// import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 
 const EditStory = () => {
@@ -97,7 +97,6 @@ const EditStory = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <Navbar />
         <p className="text-center mt-20 text-gray-500">Loading story...</p>
       </div>
     );
@@ -105,8 +104,6 @@ const EditStory = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      
-
       <div className="max-w-3xl mx-auto px-6 py-14">
         {/* Header */}
         <div className="text-center mb-10">
@@ -273,6 +270,18 @@ const EditStory = () => {
           </button>
         </form>
       </div>
+      <div className="pb-16 flex justify-center">
+        <button
+          onClick={() => navigate(-1)}
+          className="group flex items-center gap-2 text-gray-500 font-semibold hover:text-gray-900 transition-colors"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform">
+            ←
+          </span>
+          Return
+        </button>
+      </div>
+      <div className="h-15"></div>
     </div>
   );
 };

@@ -10,10 +10,10 @@ import EditProfilePage from "./pages/EditProfilePage.jsx";
 import ViewStory from "./pages/ViewStory.jsx";
 import CreateStory from "./pages/CreateStory.jsx";
 import EditStory from "./pages/EditStory.jsx";
-
 import GuestRoute from "./components/GuestRoute.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
+import UserProfile from "./pages/ViewUser.jsx";
 
 const App = () => {
   const { user } = useAuth();
@@ -104,6 +104,12 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/user/:userId" element={
+          <ProtectedRoute>
+
+            <UserProfile />
+          </ProtectedRoute>
+          } />
       </Routes>
     </>
   );
