@@ -6,8 +6,7 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [identifier, setIdentifier] = useState("");
-
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,14 +16,14 @@ const LoginPage = () => {
     setError("");
     setLoading(true);
 
-    if (!identifier || !password) {
-      setError("Email/Username and password are required");
+    if (!email || !password) {
+      setError("Email and password are required");
       setLoading(false);
       return;
     }
 
     try {
-      await login({ identifier, password });
+      await login({ email, password });
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -57,18 +56,15 @@ const LoginPage = () => {
           </p>
         )}
 
-        {/* Email or Username */}
+        {/* Email */}
         <div>
-          <label className="text-sm font-medium text-gray-700">
-            Email or Username
-          </label>
+          <label className="text-sm font-medium text-gray-700">Email</label>
           <input
-            type="text"
-            placeholder="Email or username"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            className="mt-1 w-full px-4 py-3 rounded-xl border
-               focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
         </div>
 

@@ -68,10 +68,12 @@ const ViewStory = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    
+
       <div className="max-w-4xl mx-auto px-6 py-14">
         {/* ---------- AUTHOR CARD ---------- */}
         {author && (
-          <div className="flex items-center gap-4 mb-10 p-5 bg-white/90 rounded-2xl shadow">
+          <div className="flex items-center gap-4 mb-10 p-5 bg-white/90 backdrop-blur-xl rounded-2xl shadow border border-white/50">
             <img
               src={author.avatar || "/avatar-placeholder.png"}
               alt={author.fullName}
@@ -80,13 +82,6 @@ const ViewStory = () => {
             <div>
               <p className="font-semibold text-gray-800">{author.fullName}</p>
               <p className="text-sm text-gray-500">{author.email}</p>
-
-              <button
-                onClick={() => navigate(`/users/${author._id}`)}
-                className="text-sm text-blue-600 hover:underline mt-1"
-              >
-                View User
-              </button>
             </div>
           </div>
         )}

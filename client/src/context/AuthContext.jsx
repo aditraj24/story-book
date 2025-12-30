@@ -15,12 +15,8 @@ export const AuthContextProvider = ({ children }) => {
         await api.post("/users/refresh-token");
 
         // fetch current user
-        try {
-          const res = await api.get("/users/me");
-          setUser(res.data.data);
-        } catch {
-          setUser(null);
-        }
+        const res = await api.get("/users/me");
+        setUser(res.data.data);
       } catch (err) {
         setUser(null);
       } finally {
