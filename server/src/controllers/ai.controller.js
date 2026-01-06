@@ -16,7 +16,7 @@ export const aiController = asyncHandler(async (req, res) => {
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "groq/compound", // ✅ FREE + FAST
+      model: "llama3-8b-8192", // ✅ FREE + FAST
       messages: [
         {
           role: "system",
